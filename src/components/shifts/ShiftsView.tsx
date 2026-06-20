@@ -20,6 +20,15 @@ import type { ShiftRow as Shift, EmployerRow } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 20;
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 md:flex-none md:min-w-28">
+      <span className="block text-xs text-[var(--muted)]">{label}</span>
+      <span className="text-lg font-semibold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
 function monthBounds(): { from: string; to: string } {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -118,16 +127,10 @@ export function ShiftsView({ shifts, employers }: { shifts: Shift[]; employers: 
         onChange={onFilterChange}
       />
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--muted)]">
-        <span className="font-semibold text-[var(--ink)]">{summary.count} shifts</span>
-        <span>·</span>
-        <span>{summary.hours}h</span>
-        {summary.pay > 0 && (
-          <>
-            <span>·</span>
-            <span>{formatMoney(summary.pay)}</span>
-          </>
-        )}
+      <div className="flex flex-wrap items-stretch gap-2">
+        <Stat label="Shifts" value={String(summary.count)} />
+        <Stat label="Hours" value={`${summary.hours}h`} />
+        {summary.pay > 0 && <Stat label="Pay" value={formatMoney(summary.pay)} />}
       </div>
 
       {filtered.length === 0 ? (

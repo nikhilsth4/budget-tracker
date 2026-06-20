@@ -38,9 +38,10 @@ export function TopBar() {
                 style={{ color: active ? "var(--ink)" : "var(--muted)" }}
               >
                 {l.label}
-                {active && (
-                  <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-[var(--accent)]" />
-                )}
+                <span
+                  className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-[var(--accent)] transition-transform duration-200 ease-out"
+                  style={{ transform: active ? "scaleX(1)" : "scaleX(0)", transformOrigin: "left" }}
+                />
               </Link>
             );
           })}
