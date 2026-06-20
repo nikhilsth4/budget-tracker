@@ -39,12 +39,16 @@ The experience is rethought per context, not scaled:
 
 - **Mobile (<768px):** single `max-w-md` column; **bottom tab bar** nav with a
   raised gradient FAB; capture opens as a **bottom sheet**.
-- **Tablet/desktop (≥768px):** persistent **left sidebar** nav (`SideNav`, 15–16rem)
-  with an inline "+ Add"; the bottom bar is hidden. Content widens to `max-w-5xl`
-  and centers (never stretches to 4K). Budget categories and shift rows flow into a
-  `1 → 2 → 3`-column grid; the net summary goes horizontal. Settings and the
-  transaction detail stay in a readable `max-w-2xl` column. Capture opens as a
-  **centered modal** (`Sheet` swaps bottom-sheet ↔ modal via `useMediaQuery`).
+- **Tablet/desktop (≥768px):** a sticky **top bar** (`TopBar`) with the wordmark,
+  links with an animated active underline, and an inline "+ Add"; the bottom bar is
+  hidden. Content widens to `max-w-6xl` and centers (never stretches to 4K). Budget
+  categories flow into a `1 → 2 → 3`-column grid; the net summary goes horizontal.
+  **Shifts** become a filterable, paginated **data table** (Date · Employer · Type ·
+  In · Out · Hours · Pay), with tabular figures, a sticky header, and sortable
+  Date/Hours/Pay columns; on mobile the same filtered/paginated data renders as
+  cards. Settings and the transaction detail stay in a readable `max-w-2xl` column.
+  Capture opens as a **centered modal** (`Sheet` swaps bottom-sheet ↔ modal via
+  `useMediaQuery`).
 - Hover lifts are gated to `md:` (pointer-fine); touch uses `active:` feedback.
   `viewport-fit=cover` + `env(safe-area-inset)` handle notches.
 
