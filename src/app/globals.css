@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/*
+ * Design system — "friendly money companion"
+ * A confident rose carries the brand on a clean white canvas; the surface stays
+ * neutral so the color (not a tinted background) does the personality work.
+ * All foreground/background pairs verified ≥4.5:1 (small) / ≥3:1 (large).
+ */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #fdf2f6; /* faint rose well for chips / inset fields */
+  --ink: #1f1a1d; /* near-black plum — 17:1 on white */
+  --muted: #6b5b63; /* 6.4:1 on white */
+  --line: rgba(31, 26, 29, 0.1);
+
+  --accent: #be185d; /* brand rose — 6:1, safe for text + white-on-fill */
+  --accent-bright: #ec4899; /* decorative only (large fills, glow) */
+  --accent-soft: #fce7f0;
+
+  --ok: #047857; /* income green — 5.5:1 */
+  --danger: #c62828; /* 5.6:1 */
+
+  --radius: 1.15rem;
+  --shadow: 0 1px 2px rgba(31, 26, 29, 0.05), 0 10px 30px -12px rgba(31, 26, 29, 0.18);
+  --shadow-sm: 0 1px 2px rgba(31, 26, 29, 0.06);
+  --hero: linear-gradient(135deg, #be185d 0%, #7d1442 100%);
+
+  /* z-index scale */
+  --z-nav: 30;
+  --z-backdrop: 40;
+  --z-sheet: 50;
+  --z-toast: 60;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.hero-surface {
+  background: var(--hero);
+  color: #fff;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Motion is opt-out — every animation crossfades or snaps instead. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
