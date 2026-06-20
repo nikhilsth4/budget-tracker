@@ -290,7 +290,7 @@ export function AddSheet({
       <button
         onClick={save}
         disabled={saving}
-        className="mt-6 w-full rounded-xl bg-[var(--ink)] py-3.5 font-medium text-white transition active:scale-[0.99] disabled:opacity-60"
+        className="mt-6 w-full rounded-xl bg-[var(--accent)] py-3.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(190,24,93,0.6)] transition active:scale-[0.99] disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save"}
       </button>

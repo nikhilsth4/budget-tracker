@@ -5,6 +5,7 @@ import { MonthSwitcher } from "@/components/budget/MonthSwitcher";
 import { BalanceSummary } from "@/components/budget/BalanceSummary";
 import { CategoryCard } from "@/components/budget/CategoryCard";
 import { EmptyAddState } from "@/components/add/EmptyAddState";
+import { Stagger } from "@/components/ui/Stagger";
 
 function currentMonth(): string {
   const d = new Date();
@@ -39,6 +40,9 @@ export default async function BudgetPage({
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
+      </div>
       <MonthSwitcher month={month} />
       <BalanceSummary totalIn={totalIn} totalOut={totalOut} />
 
@@ -51,11 +55,11 @@ export default async function BudgetPage({
           mode="out"
         />
       ) : (
-        <div className="space-y-2.5">
+        <Stagger className="space-y-2.5">
           {categories.map((c) => (
             <CategoryCard key={c.id} category={c} amount={amountByCategory.get(c.id) ?? 0} />
           ))}
-        </div>
+        </Stagger>
       )}
     </div>
   );

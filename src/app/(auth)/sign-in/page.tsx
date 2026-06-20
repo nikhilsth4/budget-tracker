@@ -33,7 +33,13 @@ export default function SignIn() {
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[var(--accent)] text-white text-2xl shadow-[var(--shadow)]">
+          <div
+            className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-[1.25rem] text-3xl text-white"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-bright), var(--accent))",
+              boxShadow: "0 12px 28px -8px rgba(190, 24, 93, 0.5)",
+            }}
+          >
             ◐
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Budget &amp; Shifts</h1>
@@ -61,7 +67,7 @@ export default function SignIn() {
             />
             <button
               disabled={loading}
-              className="w-full rounded-xl bg-[var(--ink)] py-3.5 font-medium text-white transition active:scale-[0.99] disabled:opacity-60"
+              className="w-full rounded-xl bg-[var(--accent)] py-3.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(190,24,93,0.6)] transition active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? "Sending…" : "Send magic link"}
             </button>

@@ -48,10 +48,12 @@ export default async function ShiftsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-[var(--ink)] p-5 text-white shadow-[var(--shadow)]">
+      <h1 className="text-2xl font-semibold tracking-tight">Shifts</h1>
+      <div className="rounded-[var(--radius)] bg-[var(--ink)] p-5 text-white shadow-[var(--shadow)]">
         <p className="text-sm text-white/60">This week</p>
-        <p className="mt-1 text-3xl font-semibold tracking-tight">
-          {Math.round(thisWeekHours * 10) / 10}h
+        <p className="mt-1 flex items-baseline gap-1 text-[2.5rem] font-semibold leading-none tracking-tight">
+          {Math.round(thisWeekHours * 10) / 10}
+          <span className="text-lg font-medium text-white/60">hrs</span>
         </p>
       </div>
 
