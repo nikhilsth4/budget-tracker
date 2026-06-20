@@ -36,7 +36,7 @@ export default async function CategoryDetailPage({
   const { pct, over } = categoryProgress(spent, category.monthly_limit);
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-2xl space-y-5">
       <Link href="/budget" className="text-sm text-[var(--muted)]">
         ‹ Budget
       </Link>

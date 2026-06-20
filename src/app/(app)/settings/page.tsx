@@ -14,8 +14,8 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+    <div className="max-w-2xl space-y-8">
+      <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Settings</h1>
 
       <section className="space-y-3">
         <h2 className="px-1 text-sm font-semibold text-[var(--muted)]">Categories</h2>

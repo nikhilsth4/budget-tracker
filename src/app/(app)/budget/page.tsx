@@ -31,10 +31,12 @@ export default async function BudgetPage({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Budget</h1>
+        <div className="md:w-56">
+          <MonthSwitcher month={month} />
+        </div>
       </div>
-      <MonthSwitcher month={month} />
       <BalanceSummary totalIn={totalIn} totalOut={totalOut} />
 
       {transactions.length === 0 ? (
@@ -46,7 +48,7 @@ export default async function BudgetPage({
           mode="out"
         />
       ) : (
-        <Stagger className="space-y-2.5">
+        <Stagger className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((c) => (
             <CategoryCard key={c.id} category={c} amount={amountByCategory.get(c.id) ?? 0} />
           ))}

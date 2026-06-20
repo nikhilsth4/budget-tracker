@@ -17,7 +17,7 @@ export function CategoryCard({
   return (
     <Link
       href={`/budget/${category.id}`}
-      className="block rounded-2xl bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition active:scale-[0.99]"
+      className="block h-full rounded-2xl bg-[var(--surface)] p-4 shadow-[var(--shadow)] transition active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:shadow-[0_4px_8px_rgba(31,26,29,0.08),0_16px_40px_-16px_rgba(31,26,29,0.25)]"
     >
       <div className="flex items-center gap-3">
         <span

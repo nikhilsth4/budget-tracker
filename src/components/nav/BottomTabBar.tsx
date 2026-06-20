@@ -28,7 +28,7 @@ function Tab({ href, label, icon }: { href: string; label: string; icon: string 
 
 export function BottomTabBar() {
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md items-center border-t border-[var(--line)] bg-[var(--surface)]/95 px-2 backdrop-blur">
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md items-center border-t border-[var(--line)] bg-[var(--surface)]/95 px-2 backdrop-blur md:hidden">
       {tabs.map((t) => (
         <Tab key={t.href} {...t} />
       ))}
