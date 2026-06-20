@@ -9,12 +9,12 @@ export default function SignIn() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const supabase = createBrowserSupabase();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    const supabase = createBrowserSupabase();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${location.origin}/auth/callback` },
