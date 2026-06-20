@@ -5,10 +5,6 @@ export function hoursWorked(clockIn: string, clockOut: string): number {
   return Math.round(((end - start) / 3_600_000) * 100) / 100;
 }
 
-export function shiftPay(_hours: number, pay: number | null): number | null {
-  return pay;
-}
-
 /**
  * Stable key for the ISO week that contains `date` (a YYYY-MM-DD string or any
  * Date-parseable value). Returns e.g. "2026-W25". Weeks start Monday.

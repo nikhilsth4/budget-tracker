@@ -1,7 +1,7 @@
 -- Categories
 create table public.categories (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
   name text not null,
   icon text not null default 'wallet',
   color text not null default '#6366F1',
@@ -13,7 +13,7 @@ create table public.categories (
 -- Transactions
 create table public.transactions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
   category_id uuid references public.categories on delete set null,
   amount numeric not null check (amount > 0),
   direction text not null check (direction in ('in','out')),
@@ -25,7 +25,7 @@ create table public.transactions (
 -- Employers
 create table public.employers (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
   name text not null,
   color text not null default '#6366F1',
   created_at timestamptz not null default now()
@@ -34,7 +34,7 @@ create table public.employers (
 -- Shifts
 create table public.shifts (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
   employer_id uuid references public.employers on delete set null,
   shift_type text,
   clock_in timestamptz not null,

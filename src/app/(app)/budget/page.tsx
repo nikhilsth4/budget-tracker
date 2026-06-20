@@ -1,6 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { listCategories } from "@/lib/data/categories";
 import { listTransactions } from "@/lib/data/transactions";
+import { summarizeMonth } from "@/lib/budget";
 import { MonthSwitcher } from "@/components/budget/MonthSwitcher";
 import { BalanceSummary } from "@/components/budget/BalanceSummary";
 import { CategoryCard } from "@/components/budget/CategoryCard";
@@ -26,17 +27,7 @@ export default async function BudgetPage({
     listTransactions(supabase, { month }),
   ]);
 
-  // Sum amounts per category and overall totals.
-  const amountByCategory = new Map<string, number>();
-  let totalIn = 0;
-  let totalOut = 0;
-  for (const t of transactions) {
-    if (t.direction === "in") totalIn += t.amount;
-    else totalOut += t.amount;
-    if (t.category_id) {
-      amountByCategory.set(t.category_id, (amountByCategory.get(t.category_id) ?? 0) + t.amount);
-    }
-  }
+  const { amountByCategory, totalIn, totalOut } = summarizeMonth(transactions, categories);
 
   return (
     <div className="space-y-5">

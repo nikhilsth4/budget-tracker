@@ -15,8 +15,9 @@ export async function createServerSupabase() {
               cookieStore.set(name, value, options),
             );
           } catch {
-            // `set` throws when called from a Server Component; middleware
-            // refreshes the session cookie instead, so this is safe to ignore.
+            // `set` throws when called from a Server Component; the proxy
+            // (src/proxy.ts) refreshes the session cookie instead, so this is
+            // safe to ignore.
           }
         },
       },
