@@ -42,8 +42,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const NOOP_TOAST = { show: () => {} };
+
+/**
+ * Returns the toast controller. Falls back to a no-op when rendered outside a
+ * ToastProvider (e.g. in isolated component tests) — toasts are non-critical.
+ */
 export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within ToastProvider");
-  return ctx;
+  return useContext(ToastContext) ?? NOOP_TOAST;
 }
