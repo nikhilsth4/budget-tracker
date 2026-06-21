@@ -6,6 +6,7 @@ import { formatMoney } from "@/lib/money";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { deleteShift } from "@/lib/data/shifts";
 import { useToast } from "@/components/ui/Toast";
+import { useAddSheet } from "@/components/add/AddSheetContext";
 import type { SortDir, SortKey } from "@/lib/shiftFilters";
 import type { ShiftRow, EmployerRow } from "@/lib/supabase/types";
 
@@ -48,6 +49,7 @@ export function ShiftTable({
   onDeleted,
 }: ShiftTableProps) {
   const toast = useToast();
+  const { openEditShift } = useAddSheet();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function remove(id: string) {
@@ -114,7 +116,8 @@ export function ShiftTable({
             return (
               <tr
                 key={s.id}
-                className="border-b border-[var(--line)] transition-colors last:border-0 [@media(hover:hover)]:hover:bg-[var(--surface-2)]"
+                onClick={() => openEditShift(s)}
+                className="cursor-pointer border-b border-[var(--line)] transition-colors last:border-0 [@media(hover:hover)]:hover:bg-[var(--surface-2)]"
               >
                 <td className="px-4 py-3 font-medium whitespace-nowrap">
                   {fmtDate(s.worked_on)}
@@ -150,7 +153,10 @@ export function ShiftTable({
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
-                    onClick={() => remove(s.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(s.id);
+                    }}
                     disabled={busy === s.id}
                     aria-label="Remove shift"
                     className="text-[var(--muted)] transition hover:text-[var(--danger)] disabled:opacity-50"

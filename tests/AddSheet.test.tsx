@@ -62,4 +62,36 @@ describe("AddSheet", () => {
     expect(onCreated).not.toHaveBeenCalled();
     expect(screen.getByText(/valid amount/i)).toBeInTheDocument();
   });
+
+  it("opens in edit mode: shift-only, prefilled, no In/Out/Shift toggle", () => {
+    const editShift = {
+      id: "s1",
+      user_id: "u",
+      employer_id: "e1",
+      shift_type: "Morning",
+      clock_in: "2026-06-17T09:00:00Z",
+      clock_out: "2026-06-17T17:00:00Z",
+      pay: 120,
+      note: "covered for Sam",
+      worked_on: "2026-06-17",
+      created_at: "",
+    };
+    render(
+      <AddSheet
+        open
+        onClose={() => {}}
+        categories={categories as never}
+        employers={employers as never}
+        onCreated={() => {}}
+        editShift={editShift as never}
+      />,
+    );
+    // No mode toggle when editing an existing shift.
+    expect(screen.queryByRole("button", { name: "Out" })).toBeNull();
+    // Pay and note are shown (not hidden behind the collapsible) and prefilled.
+    expect(screen.getByDisplayValue("120")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("covered for Sam")).toBeInTheDocument();
+    // Save button reflects edit intent.
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+  });
 });
