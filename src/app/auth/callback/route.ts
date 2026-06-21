@@ -8,5 +8,8 @@ export async function GET(request: Request) {
     const supabase = await createServerSupabase();
     await supabase.auth.exchangeCodeForSession(code);
   }
-  return NextResponse.redirect(`${origin}/budget`);
+  // Recovery links pass ?next=/reset-password; only allow internal paths.
+  const next = searchParams.get("next");
+  const dest = next && next.startsWith("/") ? next : "/budget";
+  return NextResponse.redirect(`${origin}${dest}`);
 }

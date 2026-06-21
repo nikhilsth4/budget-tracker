@@ -6,33 +6,71 @@ import { motion } from "framer-motion";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { validateCredentials } from "@/lib/authValidation";
 
-type Mode = "signin" | "signup";
+type Mode = "signin" | "signup" | "reset";
 
 const fieldClass =
   "w-full rounded-xl border border-black/10 bg-[var(--surface)] px-4 py-3.5 text-base outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]";
+
+const subtitles: Record<Mode, string> = {
+  signin: "Sign in to track your money and hours.",
+  signup: "Create an account to get started.",
+  reset: "We'll email you a link to reset your password.",
+};
 
 export default function SignIn() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function go(next: Mode) {
+    setMode(next);
+    setError(null);
+    setNotice(null);
+    setPassword("");
+    setConfirm("");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
+    const supabase = createBrowserSupabase();
 
-    const errs = validateCredentials(email, password);
+    // Reset: only an email is needed.
+    if (mode === "reset") {
+      if (email.trim() === "") {
+        setError("Enter your email.");
+        return;
+      }
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/auth/callback?next=/reset-password`,
+      });
+      setLoading(false);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setNotice("Check your email for a link to reset your password.");
+      return;
+    }
+
+    const errs = validateCredentials(
+      email,
+      password,
+      mode === "signup" ? confirm : undefined,
+    );
     if (errs.length) {
       setError(errs[0]);
       return;
     }
 
     setLoading(true);
-    const supabase = createBrowserSupabase();
 
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({ email, password });
@@ -47,8 +85,7 @@ export default function SignIn() {
         router.refresh();
       } else {
         setNotice("Check your email to confirm your account, then sign in.");
-        setMode("signin");
-        setPassword("");
+        go("signin");
       }
       return;
     }
@@ -63,11 +100,9 @@ export default function SignIn() {
     router.refresh();
   }
 
-  function toggleMode() {
-    setMode(mode === "signin" ? "signup" : "signin");
-    setError(null);
-    setNotice(null);
-  }
+  const primaryLabel = loading
+    ? { signin: "Signing in…", signup: "Creating account…", reset: "Sending…" }[mode]
+    : { signin: "Sign in", signup: "Create account", reset: "Send reset link" }[mode];
 
   return (
     <main className="grid min-h-dvh place-items-center bg-[var(--bg)] p-6">
@@ -88,11 +123,7 @@ export default function SignIn() {
             ◐
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Budget &amp; Shifts</h1>
-          <p className="mt-1 text-[var(--muted)]">
-            {mode === "signin"
-              ? "Sign in to track your money and hours."
-              : "Create an account to get started."}
-          </p>
+          <p className="mt-1 text-[var(--muted)]">{subtitles[mode]}</p>
         </div>
 
         <form
@@ -109,36 +140,77 @@ export default function SignIn() {
             autoComplete="email"
             className={fieldClass}
           />
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            className={fieldClass}
-          />
+
+          {mode !== "reset" && (
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              className={fieldClass}
+            />
+          )}
+
+          {mode === "signup" && (
+            <input
+              type="password"
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Confirm password"
+              autoComplete="new-password"
+              className={fieldClass}
+            />
+          )}
+
+          {mode === "signin" && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => go("reset")}
+                className="text-sm font-medium text-[var(--accent)]"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
           <button
             disabled={loading}
             className="w-full rounded-xl bg-[var(--accent)] py-3.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(190,24,93,0.6)] transition active:scale-[0.99] disabled:opacity-60"
           >
-            {loading
-              ? mode === "signin"
-                ? "Signing in…"
-                : "Creating account…"
-              : mode === "signin"
-                ? "Sign in"
-                : "Create account"}
+            {primaryLabel}
           </button>
+
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           {notice && <p className="text-sm text-[var(--ok)]">{notice}</p>}
         </form>
 
         <p className="mt-5 text-center text-sm text-[var(--muted)]">
-          {mode === "signin" ? "New here? " : "Already have an account? "}
-          <button onClick={toggleMode} className="font-medium text-[var(--accent)]">
-            {mode === "signin" ? "Create an account" : "Sign in"}
-          </button>
+          {mode === "reset" ? (
+            <>
+              Remembered it?{" "}
+              <button onClick={() => go("signin")} className="font-medium text-[var(--accent)]">
+                Back to sign in
+              </button>
+            </>
+          ) : mode === "signin" ? (
+            <>
+              New here?{" "}
+              <button onClick={() => go("signup")} className="font-medium text-[var(--accent)]">
+                Create an account
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button onClick={() => go("signin")} className="font-medium text-[var(--accent)]">
+                Sign in
+              </button>
+            </>
+          )}
         </p>
       </motion.div>
     </main>
