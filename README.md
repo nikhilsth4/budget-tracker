@@ -4,7 +4,7 @@ A friendly, mobile-first personal tracker: log money **in/out** against budget
 categories, and write down the **job shifts** you work — in one app.
 
 Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**,
-**Framer Motion**, and **Supabase** (Postgres, magic-link auth, Row Level Security).
+**Framer Motion**, and **Supabase** (Postgres, email/password auth, Row Level Security).
 
 ## Features
 
@@ -13,7 +13,7 @@ Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 - **Shifts** — clock-in / clock-out per employer, grouped by week with an hours total.
 - **Effortless capture** — one `+` button opens a single sheet with an In / Out /
   Shift toggle and smart defaults (today, last-used category/employer, now).
-- **Private** — magic-link sign-in; every row is protected by RLS so you only ever
+- **Private** — email/password sign-in; every row is protected by RLS so you only ever
   see your own data.
 
 ## Prerequisites
@@ -49,10 +49,21 @@ Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**,
    creates the tables, enables Row Level Security, and seeds default categories for
    each new user. See [`supabase/README.md`](supabase/README.md) for details.
 
-4. **Enable magic-link auth**
+4. **Configure email/password auth**
 
-   In **Authentication → Providers → Email**, enable Email, and add
-   `http://localhost:3000/auth/callback` under **URL Configuration → Redirect URLs**.
+   - **Authentication → Providers → Email:** enable **Email**, keeping **Confirm
+     email ON**. New accounts must click a confirmation link before their first
+     sign-in.
+   - **Authentication → URL Configuration → Site URL:** set this to your
+     **production URL** (e.g. `https://your-app.vercel.app`). Confirmation links use
+     the Site URL, so if it's left as `http://localhost:3000` your production emails
+     will redirect to localhost. Use `http://localhost:3000` only for local-only use.
+   - **Redirect URLs:** add **both** so dev and prod both work:
+
+     ```
+     http://localhost:3000/auth/callback
+     https://your-app.vercel.app/auth/callback
+     ```
 
 ## Develop
 
