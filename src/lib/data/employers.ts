@@ -21,6 +21,15 @@ export async function createEmployer(
   return data as EmployerRow;
 }
 
+export async function updateEmployer(
+  sb: SupabaseClient,
+  id: string,
+  patch: Partial<Pick<EmployerRow, "name" | "color">>,
+): Promise<void> {
+  const { error } = await sb.from("employers").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteEmployer(sb: SupabaseClient, id: string): Promise<void> {
   const { error } = await sb.from("employers").delete().eq("id", id);
   if (error) throw error;

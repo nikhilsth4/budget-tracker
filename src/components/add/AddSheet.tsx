@@ -5,10 +5,15 @@ import { Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
 import { validateShift, validateTransaction } from "@/lib/validation";
 import { createBrowserSupabase } from "@/lib/supabase/client";
-import { createTransaction } from "@/lib/data/transactions";
+import { createTransaction, updateTransaction } from "@/lib/data/transactions";
 import { createShift, updateShift } from "@/lib/data/shifts";
 import type { AddMode } from "./AddSheetContext";
-import type { CategoryRow, EmployerRow, ShiftRow } from "@/lib/supabase/types";
+import type {
+  CategoryRow,
+  EmployerRow,
+  ShiftRow,
+  TransactionRow,
+} from "@/lib/supabase/types";
 
 const SHIFT_TYPES = ["Morning", "Afternoon", "Evening", "Night"];
 const LAST_CATEGORY = "bt:lastCategoryId";
@@ -52,9 +57,11 @@ export function AddSheet({
   onCreated,
   defaultMode = "out",
   editShift = null,
+  editTransaction = null,
   createTransactionFn,
   createShiftFn,
   updateShiftFn,
+  updateTransactionFn,
 }: {
   open: boolean;
   onClose: () => void;
@@ -63,11 +70,15 @@ export function AddSheet({
   onCreated: () => void;
   defaultMode?: AddMode;
   editShift?: ShiftRow | null;
+  editTransaction?: TransactionRow | null;
   createTransactionFn?: typeof createTransaction;
   createShiftFn?: typeof createShift;
   updateShiftFn?: typeof updateShift;
+  updateTransactionFn?: typeof updateTransaction;
 }) {
-  const isEditing = editShift !== null;
+  const isEditingShift = editShift !== null;
+  const isEditingTransaction = editTransaction !== null;
+  const isEditing = isEditingShift || isEditingTransaction;
   const toast = useToast();
   const [mode, setMode] = useState<AddMode>(defaultMode);
   const [errors, setErrors] = useState<string[]>([]);
@@ -102,6 +113,15 @@ export function AddSheet({
       return;
     }
 
+    if (editTransaction) {
+      setMode(editTransaction.direction);
+      setAmount(String(editTransaction.amount));
+      setCategoryId(editTransaction.category_id);
+      setOccurredAt(editTransaction.occurred_at);
+      setNote(editTransaction.note ?? "");
+      return;
+    }
+
     setMode(defaultMode);
     setAmount("");
     setNote("");
@@ -118,11 +138,12 @@ export function AddSheet({
     setEmployerId(
       employers.find((e) => e.id === lastEmp)?.id ?? employers[0]?.id ?? null,
     );
-  }, [open, defaultMode, editShift, categories, employers]);
+  }, [open, defaultMode, editShift, editTransaction, categories, employers]);
 
   const persistTransaction = createTransactionFn ?? createTransaction;
   const persistShift = createShiftFn ?? createShift;
   const persistUpdateShift = updateShiftFn ?? updateShift;
+  const persistUpdateTransaction = updateTransactionFn ?? updateTransaction;
 
   async function save() {
     if (mode === "shift") {
@@ -162,16 +183,22 @@ export function AddSheet({
     setErrors(errs);
     if (errs.length) return;
     setSaving(true);
+    const fields = {
+      category_id: categoryId,
+      amount: Number(amount),
+      direction: (mode === "in" ? "in" : "out") as "in" | "out",
+      note: note.trim() || null,
+      occurred_at: occurredAt,
+    };
     try {
-      await persistTransaction(createBrowserSupabase(), {
-        category_id: categoryId,
-        amount: Number(amount),
-        direction: mode === "in" ? "in" : "out",
-        note: note.trim() || null,
-        occurred_at: occurredAt,
-      });
+      if (editTransaction) {
+        await persistUpdateTransaction(createBrowserSupabase(), editTransaction.id, fields);
+        toast.show("Transaction updated");
+      } else {
+        await persistTransaction(createBrowserSupabase(), fields);
+        toast.show(mode === "in" ? "Income added" : "Expense added");
+      }
       if (categoryId) window.localStorage.setItem(LAST_CATEGORY, categoryId);
-      toast.show(mode === "in" ? "Income added" : "Expense added");
       onCreated();
       onClose();
     } catch {
@@ -181,10 +208,17 @@ export function AddSheet({
     }
   }
 
+  const sheetTitle = isEditingShift
+    ? "Edit shift"
+    : isEditingTransaction
+      ? "Edit transaction"
+      : "Add";
+
+  // Editing a transaction keeps In/Out (direction stays editable) but drops Shift.
   const segments: { key: AddMode; label: string }[] = [
     { key: "in", label: "In" },
     { key: "out", label: "Out" },
-    { key: "shift", label: "Shift" },
+    ...(isEditingTransaction ? [] : [{ key: "shift" as AddMode, label: "Shift" }]),
   ];
 
   const payNoteFields = (
@@ -209,11 +243,23 @@ export function AddSheet({
     </>
   );
 
+  const transactionNote = (
+    <input
+      value={note}
+      onChange={(e) => setNote(e.target.value)}
+      placeholder="What was it for?"
+      className={inputClass}
+    />
+  );
+
   return (
-    <Sheet open={open} onClose={onClose} title={isEditing ? "Edit shift" : "Add"}>
-      {/* Segmented control — hidden when editing an existing shift */}
-      {!isEditing && (
-        <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-[var(--surface-2)] p-1">
+    <Sheet open={open} onClose={onClose} title={sheetTitle}>
+      {/* Segmented control — hidden when editing a shift; In/Out only when editing a transaction */}
+      {!isEditingShift && (
+        <div
+          className="mb-5 grid gap-1 rounded-xl bg-[var(--surface-2)] p-1"
+          style={{ gridTemplateColumns: `repeat(${segments.length}, minmax(0, 1fr))` }}
+        >
           {segments.map((s) => (
             <button
               key={s.key}
@@ -310,14 +356,11 @@ export function AddSheet({
               className={inputClass}
             />
           </Field>
-          <Collapsible label="+ note">
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="What was it for?"
-              className={inputClass}
-            />
-          </Collapsible>
+          {isEditingTransaction ? (
+            <Field label="Note (optional)">{transactionNote}</Field>
+          ) : (
+            <Collapsible label="+ note">{transactionNote}</Collapsible>
+          )}
         </div>
       )}
 

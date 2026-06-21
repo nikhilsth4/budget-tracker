@@ -48,6 +48,17 @@ export async function createTransaction(
   return data as TransactionRow;
 }
 
+export async function updateTransaction(
+  sb: SupabaseClient,
+  id: string,
+  patch: Partial<
+    Pick<TransactionRow, "category_id" | "amount" | "direction" | "note" | "occurred_at">
+  >,
+): Promise<void> {
+  const { error } = await sb.from("transactions").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteTransaction(sb: SupabaseClient, id: string): Promise<void> {
   const { error } = await sb.from("transactions").delete().eq("id", id);
   if (error) throw error;
