@@ -94,4 +94,34 @@ describe("AddSheet", () => {
     // Save button reflects edit intent.
     expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
   });
+
+  it("opens a transaction in edit mode: In/Out only, prefilled, Save changes", () => {
+    const editTransaction = {
+      id: "t1",
+      user_id: "u",
+      category_id: "c1",
+      amount: 24,
+      direction: "out",
+      note: "Taxi to airport",
+      occurred_at: "2026-06-17",
+      created_at: "",
+    };
+    render(
+      <AddSheet
+        open
+        onClose={() => {}}
+        categories={categories as never}
+        employers={employers as never}
+        onCreated={() => {}}
+        editTransaction={editTransaction as never}
+      />,
+    );
+    // In/Out stay (direction editable) but Shift is gone when editing a transaction.
+    expect(screen.getByRole("button", { name: "Out" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Shift" })).toBeNull();
+    // Amount and note are prefilled (note shown, not collapsed).
+    expect(screen.getByDisplayValue("24")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Taxi to airport")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+  });
 });

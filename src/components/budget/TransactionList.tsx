@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/money";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { deleteTransaction } from "@/lib/data/transactions";
 import { useToast } from "@/components/ui/Toast";
+import { useAddSheet } from "@/components/add/AddSheetContext";
 import type { TransactionRow } from "@/lib/supabase/types";
 
 function formatDate(d: string): string {
@@ -20,6 +21,7 @@ function formatDate(d: string): string {
 export function TransactionList({ transactions }: { transactions: TransactionRow[] }) {
   const router = useRouter();
   const toast = useToast();
+  const { openEditTransaction } = useAddSheet();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function remove(id: string) {
@@ -44,24 +46,33 @@ export function TransactionList({ transactions }: { transactions: TransactionRow
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex items-center gap-3 rounded-2xl bg-[var(--surface)] p-4 shadow-[var(--shadow)]"
+            className="flex items-center gap-1 rounded-2xl bg-[var(--surface)] p-1.5 shadow-[var(--shadow)]"
           >
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{t.note || "—"}</p>
-              <p className="text-sm text-[var(--muted)]">{formatDate(t.occurred_at)}</p>
-            </div>
-            <span
-              className="font-semibold"
-              style={{ color: t.direction === "in" ? "var(--ok)" : "var(--ink)" }}
+            <button
+              type="button"
+              onClick={() => openEditTransaction(t)}
+              aria-label={`Edit ${t.note || "transaction"}`}
+              className="flex flex-1 items-center gap-3 rounded-xl p-2.5 text-left transition active:bg-[var(--surface-2)] [@media(hover:hover)]:hover:bg-[var(--surface-2)]"
             >
-              {t.direction === "in" ? "+" : "−"}
-              {formatMoney(t.amount)}
-            </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{t.note || "—"}</span>
+                <span className="block text-sm text-[var(--muted)]">
+                  {formatDate(t.occurred_at)}
+                </span>
+              </span>
+              <span
+                className="font-semibold"
+                style={{ color: t.direction === "in" ? "var(--ok)" : "var(--ink)" }}
+              >
+                {t.direction === "in" ? "+" : "−"}
+                {formatMoney(t.amount)}
+              </span>
+            </button>
             <button
               onClick={() => remove(t.id)}
               disabled={busy === t.id}
               aria-label="Delete transaction"
-              className="grid h-8 w-8 place-items-center rounded-full text-[var(--muted)] transition hover:bg-black/5 disabled:opacity-50"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[var(--muted)] transition hover:bg-black/5 disabled:opacity-50"
             >
               ✕
             </button>
