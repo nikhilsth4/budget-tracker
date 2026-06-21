@@ -6,9 +6,9 @@ import { useToast } from "@/components/ui/Toast";
 import { validateShift, validateTransaction } from "@/lib/validation";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { createTransaction } from "@/lib/data/transactions";
-import { createShift } from "@/lib/data/shifts";
+import { createShift, updateShift } from "@/lib/data/shifts";
 import type { AddMode } from "./AddSheetContext";
-import type { CategoryRow, EmployerRow } from "@/lib/supabase/types";
+import type { CategoryRow, EmployerRow, ShiftRow } from "@/lib/supabase/types";
 
 const SHIFT_TYPES = ["Morning", "Afternoon", "Evening", "Night"];
 const LAST_CATEGORY = "bt:lastCategoryId";
@@ -35,6 +35,15 @@ function read(key: string): string | null {
   return window.localStorage.getItem(key);
 }
 
+/** ISO timestamp → local "YYYY-MM-DDTHH:mm" for a datetime-local input. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
 export function AddSheet({
   open,
   onClose,
@@ -42,8 +51,10 @@ export function AddSheet({
   employers,
   onCreated,
   defaultMode = "out",
+  editShift = null,
   createTransactionFn,
   createShiftFn,
+  updateShiftFn,
 }: {
   open: boolean;
   onClose: () => void;
@@ -51,9 +62,12 @@ export function AddSheet({
   employers: EmployerRow[];
   onCreated: () => void;
   defaultMode?: AddMode;
+  editShift?: ShiftRow | null;
   createTransactionFn?: typeof createTransaction;
   createShiftFn?: typeof createShift;
+  updateShiftFn?: typeof updateShift;
 }) {
+  const isEditing = editShift !== null;
   const toast = useToast();
   const [mode, setMode] = useState<AddMode>(defaultMode);
   const [errors, setErrors] = useState<string[]>([]);
@@ -72,14 +86,27 @@ export function AddSheet({
   const [clockOut, setClockOut] = useState(nowLocal());
   const [pay, setPay] = useState("");
 
-  // Reset to smart defaults each time the sheet opens.
+  // On open: prefill from the shift being edited, else reset to smart defaults.
   useEffect(() => {
     if (!open) return;
-    setMode(defaultMode);
     setErrors([]);
+
+    if (editShift) {
+      setMode("shift");
+      setEmployerId(editShift.employer_id);
+      setShiftType(editShift.shift_type ?? "");
+      setClockIn(toLocalInput(editShift.clock_in));
+      setClockOut(toLocalInput(editShift.clock_out));
+      setPay(editShift.pay != null ? String(editShift.pay) : "");
+      setNote(editShift.note ?? "");
+      return;
+    }
+
+    setMode(defaultMode);
     setAmount("");
     setNote("");
     setPay("");
+    setShiftType("");
     setOccurredAt(todayISO());
     setClockIn(nowLocal());
     setClockOut(nowLocal());
@@ -91,10 +118,11 @@ export function AddSheet({
     setEmployerId(
       employers.find((e) => e.id === lastEmp)?.id ?? employers[0]?.id ?? null,
     );
-  }, [open, defaultMode, categories, employers]);
+  }, [open, defaultMode, editShift, categories, employers]);
 
   const persistTransaction = createTransactionFn ?? createTransaction;
   const persistShift = createShiftFn ?? createShift;
+  const persistUpdateShift = updateShiftFn ?? updateShift;
 
   async function save() {
     if (mode === "shift") {
@@ -102,18 +130,24 @@ export function AddSheet({
       setErrors(errs);
       if (errs.length) return;
       setSaving(true);
+      const fields = {
+        employer_id: employerId,
+        shift_type: shiftType.trim() || null,
+        clock_in: new Date(clockIn).toISOString(),
+        clock_out: new Date(clockOut).toISOString(),
+        pay: pay.trim() ? Number(pay) : null,
+        note: note.trim() || null,
+        worked_on: clockIn.slice(0, 10),
+      };
       try {
-        await persistShift(createBrowserSupabase(), {
-          employer_id: employerId,
-          shift_type: shiftType.trim() || null,
-          clock_in: new Date(clockIn).toISOString(),
-          clock_out: new Date(clockOut).toISOString(),
-          pay: pay.trim() ? Number(pay) : null,
-          note: note.trim() || null,
-          worked_on: clockIn.slice(0, 10),
-        });
+        if (editShift) {
+          await persistUpdateShift(createBrowserSupabase(), editShift.id, fields);
+          toast.show("Shift updated");
+        } else {
+          await persistShift(createBrowserSupabase(), fields);
+          toast.show("Shift added");
+        }
         if (employerId) window.localStorage.setItem(LAST_EMPLOYER, employerId);
-        toast.show("Shift added");
         onCreated();
         onClose();
       } catch {
@@ -153,28 +187,52 @@ export function AddSheet({
     { key: "shift", label: "Shift" },
   ];
 
+  const payNoteFields = (
+    <>
+      <Field label="Pay (optional)">
+        <input
+          inputMode="decimal"
+          value={pay}
+          onChange={(e) => setPay(e.target.value)}
+          placeholder="0.00"
+          className={inputClass}
+        />
+      </Field>
+      <Field label="Note (optional)">
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Anything to remember?"
+          className={inputClass}
+        />
+      </Field>
+    </>
+  );
+
   return (
-    <Sheet open={open} onClose={onClose} title="Add">
-      {/* Segmented control */}
-      <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-[var(--surface-2)] p-1">
-        {segments.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => {
-              setMode(s.key);
-              setErrors([]);
-            }}
-            className="rounded-lg py-2 text-sm font-medium transition"
-            style={{
-              background: mode === s.key ? "var(--surface)" : "transparent",
-              color: mode === s.key ? "var(--ink)" : "var(--muted)",
-              boxShadow: mode === s.key ? "var(--shadow)" : "none",
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+    <Sheet open={open} onClose={onClose} title={isEditing ? "Edit shift" : "Add"}>
+      {/* Segmented control — hidden when editing an existing shift */}
+      {!isEditing && (
+        <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-[var(--surface-2)] p-1">
+          {segments.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => {
+                setMode(s.key);
+                setErrors([]);
+              }}
+              className="rounded-lg py-2 text-sm font-medium transition"
+              style={{
+                background: mode === s.key ? "var(--surface)" : "transparent",
+                color: mode === s.key ? "var(--ink)" : "var(--muted)",
+                boxShadow: mode === s.key ? "var(--shadow)" : "none",
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {mode === "shift" ? (
         <div className="space-y-4">
@@ -218,25 +276,11 @@ export function AddSheet({
               />
             </Field>
           </div>
-          <Collapsible label="+ pay / note">
-            <Field label="Pay (optional)">
-              <input
-                inputMode="decimal"
-                value={pay}
-                onChange={(e) => setPay(e.target.value)}
-                placeholder="0.00"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Note (optional)">
-              <input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Anything to remember?"
-                className={inputClass}
-              />
-            </Field>
-          </Collapsible>
+          {isEditing ? (
+            <div className="space-y-4">{payNoteFields}</div>
+          ) : (
+            <Collapsible label="+ pay / note">{payNoteFields}</Collapsible>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -292,7 +336,7 @@ export function AddSheet({
         disabled={saving}
         className="mt-6 w-full rounded-xl bg-[var(--accent)] py-3.5 font-semibold text-white shadow-[0_8px_20px_-8px_rgba(190,24,93,0.6)] transition active:scale-[0.99] disabled:opacity-60"
       >
-        {saving ? "Saving…" : "Save"}
+        {saving ? "Saving…" : isEditing ? "Save changes" : "Save"}
       </button>
     </Sheet>
   );

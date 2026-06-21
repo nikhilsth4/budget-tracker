@@ -22,6 +22,20 @@ export async function createShift(
   return data as ShiftRow;
 }
 
+export async function updateShift(
+  sb: SupabaseClient,
+  id: string,
+  patch: Partial<
+    Pick<
+      ShiftRow,
+      "employer_id" | "shift_type" | "clock_in" | "clock_out" | "pay" | "note" | "worked_on"
+    >
+  >,
+): Promise<void> {
+  const { error } = await sb.from("shifts").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteShift(sb: SupabaseClient, id: string): Promise<void> {
   const { error } = await sb.from("shifts").delete().eq("id", id);
   if (error) throw error;
