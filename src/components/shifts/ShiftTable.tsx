@@ -26,7 +26,10 @@ function fmtDate(d: string): string {
   });
 }
 function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 function safeHours(s: ShiftRow): number {
   try {
@@ -59,7 +62,11 @@ export function ShiftTable({
     }
   }
 
-  const sortable = (key: SortKey, label: string, align: "left" | "right" = "left") => {
+  const sortable = (
+    key: SortKey,
+    label: string,
+    align: "left" | "right" = "left",
+  ) => {
     const active = sortKey === key;
     return (
       <button
@@ -80,31 +87,38 @@ export function ShiftTable({
       </button>
     );
   };
-
   return (
     <div className="overflow-hidden rounded-2xl bg-[var(--surface)] shadow-[var(--shadow)]">
       <table className="w-full text-left text-sm">
-        <thead className="sticky top-16 z-10 bg-[var(--surface)] text-xs uppercase tracking-wide text-[var(--muted)]">
+        <thead className="bg-[var(--surface)] text-xs uppercase tracking-wide text-[var(--muted)]">
           <tr className="border-b border-[var(--line)]">
             <th className="px-4 py-3">{sortable("date", "Date")}</th>
             <th className="px-4 py-3 font-semibold">Employer</th>
             <th className="px-4 py-3 font-semibold">Type</th>
             <th className="px-4 py-3 font-semibold">In</th>
             <th className="px-4 py-3 font-semibold">Out</th>
-            <th className="px-4 py-3 text-right">{sortable("hours", "Hours", "right")}</th>
-            <th className="px-4 py-3 text-right">{sortable("pay", "Pay", "right")}</th>
+            <th className="px-4 py-3 text-right">
+              {sortable("hours", "Hours", "right")}
+            </th>
+            <th className="px-4 py-3 text-right">
+              {sortable("pay", "Pay", "right")}
+            </th>
             <th className="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
           {shifts.map((s) => {
-            const e = s.employer_id ? employersById.get(s.employer_id) : undefined;
+            const e = s.employer_id
+              ? employersById.get(s.employer_id)
+              : undefined;
             return (
               <tr
                 key={s.id}
                 className="border-b border-[var(--line)] transition-colors last:border-0 [@media(hover:hover)]:hover:bg-[var(--surface-2)]"
               >
-                <td className="px-4 py-3 font-medium whitespace-nowrap">{fmtDate(s.worked_on)}</td>
+                <td className="px-4 py-3 font-medium whitespace-nowrap">
+                  {fmtDate(s.worked_on)}
+                </td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-1.5">
                     <span
@@ -114,11 +128,24 @@ export function ShiftTable({
                     {e?.name ?? "—"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-[var(--muted)]">{s.shift_type ?? "—"}</td>
-                <td className="px-4 py-3 tabular-nums whitespace-nowrap">{fmtTime(s.clock_in)}</td>
-                <td className="px-4 py-3 tabular-nums whitespace-nowrap">{fmtTime(s.clock_out)}</td>
-                <td className="px-4 py-3 text-right font-medium tabular-nums">{safeHours(s)}h</td>
-                <td className="px-4 py-3 text-right tabular-nums" style={{ color: s.pay != null ? "var(--ok)" : "var(--muted)" }}>
+                <td className="px-4 py-3 text-[var(--muted)]">
+                  {s.shift_type ?? "—"}
+                </td>
+                <td className="px-4 py-3 tabular-nums whitespace-nowrap">
+                  {fmtTime(s.clock_in)}
+                </td>
+                <td className="px-4 py-3 tabular-nums whitespace-nowrap">
+                  {fmtTime(s.clock_out)}
+                </td>
+                <td className="px-4 py-3 text-right font-medium tabular-nums">
+                  {safeHours(s)}h
+                </td>
+                <td
+                  className="px-4 py-3 text-right tabular-nums"
+                  style={{
+                    color: s.pay != null ? "var(--ok)" : "var(--muted)",
+                  }}
+                >
                   {s.pay != null ? formatMoney(s.pay) : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
