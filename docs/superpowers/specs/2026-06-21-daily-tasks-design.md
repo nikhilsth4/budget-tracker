@@ -34,7 +34,9 @@ This feature follows the app's existing conventions: per-user Supabase tables wi
 - No weekday-specific or "X times per week" recurrence — **daily or one-time only**.
 - No full calendar / arbitrary date navigation — today plus yesterday catch-up only.
 - No swipe-between-days screen gesture (swipe acts on rows only).
-- No reminders/notifications, no money/shift linkage, no Reports (deferred).
+- An optional **time-of-day** is supported, but for **display + sorting only** — no
+  reminders/notifications in v1 (those are a deferred follow-up).
+- No money/shift linkage, no Reports (deferred).
 - No subtasks, tags, priorities, or notes on tasks in v1.
 
 ## Data model
@@ -50,7 +52,8 @@ create table public.tasks (
   title text not null,
   kind text not null default 'daily' check (kind in ('daily','once')),
   due_on date,                       -- set when kind='once'; null for daily
-  sort integer not null default 0,   -- manual ordering within the list
+  time_of_day time,                  -- optional local time-of-day hint; null = untimed
+  sort integer not null default 0,   -- manual ordering among untimed tasks
   archived_at timestamptz,           -- soft-delete; preserves streak history
   created_at timestamptz not null default now()
 );
@@ -93,6 +96,11 @@ create policy "own task_completions" on public.task_completions
     history and past streak contributions stay intact. It stops appearing from that
     point forward.
   - The UI labels both simply "Delete."
+- **Time of day** (`time_of_day`) is an optional hint on either kind. It drives
+  **ordering and display only** — it triggers no reminders. Within each group
+  (daily, then one-time), **timed tasks sort first by ascending time**, then untimed
+  tasks follow by their manual `sort`. The time is stored/displayed as a local
+  wall-clock time (`time` without timezone).
 - **No nightly job / cron.** All "what's due today" logic is derived at read time.
 
 ## Streak logic
@@ -147,9 +155,9 @@ Consecutive days where **every daily habit active that day** was completed.
 │  Today · Sat 21 Jun         │   header (date)
 │  🔥 7 day streak            │   overall daily streak — warm accent chip
 ├─────────────────────────────┤
-│  ▢ Gym            🔥12   ›   │   daily habit row + per-task streak
+│  ▢ Gym   7:00 AM  🔥12   ›   │   daily habit, timed (sorts first by time)
 │  ▣ Pack lunch     🔥 5      │   completed = filled + desaturated
-│  ▢ No eating out  🔥 0      │
+│  ▢ No eating out  🔥 0      │   untimed tasks follow, by manual sort
 │  ─ One-time ─               │
 │  ▢ Call landlord  (overdue) │   rolled-forward one-time, subtle danger tag
 ├─────────────────────────────┤
@@ -184,8 +192,10 @@ Consecutive days where **every daily habit active that day** was completed.
   a rare *definition* action with a different mental model. The frequent task action
   (complete) already lives on-screen via swipe/tap.
 - The create/edit form reuses the shared **`Sheet`** (bottom-sheet on mobile,
-  centered modal on desktop). Fields: **title**, **daily vs one-time** toggle, and a
-  **date** when one-time. Edit reuses the same sheet pre-filled.
+  centered modal on desktop). Fields: **title**, **daily vs one-time** toggle, a
+  **date** when one-time, and an **optional time of day**. Edit reuses the same sheet
+  pre-filled. Timed tasks show their time (e.g. "7:00 AM") on the row as a quiet
+  `--muted` hint.
 
 ## Architecture & components
 
@@ -217,8 +227,8 @@ Following existing structure (`src/lib/data/*`, `src/lib/*.ts`, `src/components/
    yesterday's completions for the live UI are subsets of that one fetch — no
    separate query.
 2. `lib/tasks.ts` derives: today's ordered list (daily first, then rolled-forward
-   one-time), per-task streaks, overall daily streak, and yesterday's outstanding
-   items.
+   one-time; within each group, timed tasks by ascending time, then untimed by manual
+   `sort`), per-task streaks, overall daily streak, and yesterday's outstanding items.
 3. Toggling a task optimistically updates the UI, then inserts/deletes a
    `task_completions` row (`done_on = today`, or `yesterday` from catch-up).
 4. Create/edit/delete go through `data/tasks.ts`; the list re-derives on the next
@@ -242,6 +252,8 @@ Following existing structure (`src/lib/data/*`, `src/lib/*.ts`, `src/components/
   - overall daily streak: "active that day" inclusion/exclusion across create and
     archive dates, days with no active habits, grace period for today.
   - rolled-forward overdue one-time tasks; one-time tasks excluded from streaks.
+  - ordering: timed-before-untimed within each group, ascending time, manual `sort`
+    tiebreak for untimed.
   - yesterday-outstanding derivation.
 - **Component** smoke tests for `TaskRow` toggle and the form sheet, in line with
   existing testing-library usage.
