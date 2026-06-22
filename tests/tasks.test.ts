@@ -144,13 +144,22 @@ describe("buildDay", () => {
     expect(r.once).toHaveLength(1);
     expect(r.once[0].overdue).toBe(true);
   });
-  it("hides future-dated and completed one-time tasks", () => {
+  it("hides future-dated and previously-completed one-time tasks", () => {
     const tasks = [
       task({ id: "future", kind: "once", due_on: "2026-06-25" }),
       task({ id: "doneOnce", kind: "once", due_on: "2026-06-19" }),
     ];
-    const completions = [done("doneOnce", "2026-06-19")];
+    const completions = [done("doneOnce", "2026-06-19")]; // completed on a prior day
     expect(buildDay(tasks, completions, day).once).toHaveLength(0);
+  });
+  it("keeps a one-time task completed today, marked done (drops off next day)", () => {
+    const tasks = [task({ id: "o", kind: "once", due_on: "2026-06-21" })];
+    const completions = [done("o", "2026-06-21")];
+    const today = buildDay(tasks, completions, day);
+    expect(today.once).toHaveLength(1);
+    expect(today.once[0].done).toBe(true);
+    // the following day it has dropped off
+    expect(buildDay(tasks, completions, "2026-06-22").once).toHaveLength(0);
   });
   it("includes the overall streak", () => {
     const tasks = [task({ id: "a", created_at: "2026-06-01T00:00:00Z" })];

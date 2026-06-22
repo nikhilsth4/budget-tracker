@@ -145,7 +145,13 @@ export function buildDay(
         streak: streakFromDates(dates, day),
       });
     } else {
-      if (dates.size > 0) continue; // a completed one-time task drops off
+      if (dates.size > 0) {
+        // A completed one-time task lingers (shown as done) only on the day it
+        // was completed, then drops off once that day has passed.
+        if (!dates.has(day)) continue;
+        once.push({ task: t, done: true, overdue: false, streak: 0 });
+        continue;
+      }
       if (t.due_on === null || t.due_on > day) continue; // undated or future
       once.push({ task: t, done: false, overdue: t.due_on < day, streak: 0 });
     }
