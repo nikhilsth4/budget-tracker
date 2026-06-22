@@ -7,6 +7,7 @@ import { useAddSheet } from "@/components/add/AddSheetContext";
 const links = [
   { href: "/budget", label: "Budget" },
   { href: "/shifts", label: "Shifts" },
+  { href: "/tasks", label: "Tasks" },
   { href: "/settings", label: "Settings" },
 ] as const;
 
