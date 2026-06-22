@@ -81,3 +81,78 @@ export function overallDailyStreak(
   }
   return count;
 }
+
+export interface TaskView {
+  task: TaskRow;
+  done: boolean;
+  overdue: boolean;
+  streak: number;
+}
+
+export interface DayTasks {
+  daily: TaskView[];
+  once: TaskView[];
+  overallStreak: number;
+}
+
+/** Sort: timed before untimed, ascending time, then manual sort, then created_at. */
+export function compareTasks(a: TaskRow, b: TaskRow): number {
+  const at = a.time_of_day;
+  const bt = b.time_of_day;
+  if (at && bt && at !== bt) return at < bt ? -1 : 1;
+  if (at && !bt) return -1;
+  if (!at && bt) return 1;
+  if (a.sort !== b.sort) return a.sort - b.sort;
+  return a.created_at < b.created_at ? -1 : 1;
+}
+
+/** Build the ordered task lists + overall streak for a given day. */
+export function buildDay(
+  tasks: TaskRow[],
+  completions: TaskCompletionRow[],
+  day: string,
+): DayTasks {
+  const datesByTask = new Map<string, Set<string>>();
+  for (const c of completions) {
+    let set = datesByTask.get(c.task_id);
+    if (!set) {
+      set = new Set();
+      datesByTask.set(c.task_id, set);
+    }
+    set.add(c.done_on);
+  }
+
+  const daily: TaskView[] = [];
+  const once: TaskView[] = [];
+
+  for (const t of tasks) {
+    const dates = datesByTask.get(t.id) ?? new Set<string>();
+    if (t.kind === "daily") {
+      if (dateOf(t.created_at) > day) continue;
+      if (t.archived_at !== null && dateOf(t.archived_at) <= day) continue;
+      daily.push({
+        task: t,
+        done: dates.has(day),
+        overdue: false,
+        streak: streakFromDates(dates, day),
+      });
+    } else {
+      if (dates.size > 0) continue; // a completed one-time task drops off
+      if (t.due_on === null || t.due_on > day) continue; // undated or future
+      once.push({ task: t, done: false, overdue: t.due_on < day, streak: 0 });
+    }
+  }
+
+  daily.sort((a, b) => compareTasks(a.task, b.task));
+  once.sort((a, b) => compareTasks(a.task, b.task));
+  return { daily, once, overallStreak: overallDailyStreak(tasks, completions, day) };
+}
+
+/** Active daily habits not completed on the given day (for catch-up). */
+export function outstandingDaily(
+  tasks: TaskRow[],
+  completions: TaskCompletionRow[],
+  day: string,
+): TaskView[] {
+  return buildDay(tasks, completions, day).daily.filter((v) => !v.done);
+}
