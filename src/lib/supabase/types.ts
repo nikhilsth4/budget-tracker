@@ -43,3 +43,25 @@ export interface ShiftRow {
   worked_on: string;
   created_at: string;
 }
+
+export type TaskKind = "daily" | "once";
+
+export interface TaskRow {
+  id: string;
+  user_id: string;
+  title: string;
+  kind: TaskKind;
+  due_on: string | null;
+  time_of_day: string | null;
+  sort: number;
+  archived_at: string | null;
+  created_at: string;
+}
+
+export interface TaskCompletionRow {
+  id: string;
+  user_id: string;
+  task_id: string;
+  done_on: string;
+  created_at: string;
+}
