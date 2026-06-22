@@ -43,9 +43,10 @@ export function TaskRow({
   }
 
   return (
-    <li className="relative overflow-hidden rounded-2xl">
-      {/* Actions revealed behind the row on left-swipe */}
-      <div className="absolute inset-y-0 right-0 flex items-stretch">
+    <li className="group relative overflow-hidden rounded-2xl">
+      {/* Actions revealed behind the row on left-swipe (touch only; pointer-fine
+          devices use the hover affordance below instead). */}
+      <div className="absolute inset-y-0 right-0 flex items-stretch [@media(hover:hover)]:hidden">
         <button
           type="button"
           onClick={() => {
@@ -130,6 +131,28 @@ export function TaskRow({
             🔥{streak}
           </span>
         )}
+
+        {/* Desktop affordance: Edit/Delete fade in on hover or keyboard focus.
+            Pointer-fine only — touch devices use the swipe-reveal above. The
+            gradient keeps the row content legible beneath the controls. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden items-center gap-0.5 bg-gradient-to-l from-[var(--surface)] from-65% to-transparent pl-10 pr-2 opacity-0 transition-opacity duration-200 [@media(hover:hover)]:flex group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
+          <button
+            type="button"
+            onClick={() => onEdit(task)}
+            aria-label={`Edit ${task.title}`}
+            className="grid h-8 w-8 place-items-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+          >
+            ✎
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(task)}
+            aria-label={`Delete ${task.title}`}
+            className="grid h-8 w-8 place-items-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--danger)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
+          >
+            ✕
+          </button>
+        </div>
       </motion.div>
     </li>
   );
