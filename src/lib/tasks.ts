@@ -13,9 +13,17 @@ export function addDays(dateStr: string, n: number): string {
   return toDateStr(d);
 }
 
-/** YYYY-MM-DD slice of an ISO timestamp or date string. */
-function dateOf(ts: string): string {
-  return ts.slice(0, 10);
+/**
+ * Calendar date (YYYY-MM-DD) of a timestamptz, in the VIEWER's local timezone.
+ * created_at / archived_at are UTC instants; slicing their UTC date and comparing
+ * it to a local `day` string misclassifies the boundary — a habit created at, say,
+ * 02:08 UTC reads as "tomorrow" for viewers behind UTC and vanishes from today.
+ * Converting the instant to the local calendar date (the same basis as `today`)
+ * fixes that. Note: `due_on` is a plain `date` column, not a timestamp, so it is
+ * compared as a raw string elsewhere — do NOT pass it through here.
+ */
+function localDateOf(ts: string): string {
+  return toDateStr(new Date(ts));
 }
 
 /**
@@ -65,8 +73,8 @@ export function overallDailyStreak(
   const dayComplete = (day: string): boolean => {
     const active = dailyTasks.filter(
       (t) =>
-        dateOf(t.created_at) <= day &&
-        (t.archived_at === null || dateOf(t.archived_at) > day),
+        localDateOf(t.created_at) <= day &&
+        (t.archived_at === null || localDateOf(t.archived_at) > day),
     );
     if (active.length === 0) return false;
     const doneSet = doneByDay.get(day) ?? new Set<string>();
@@ -128,8 +136,8 @@ export function buildDay(
   for (const t of tasks) {
     const dates = datesByTask.get(t.id) ?? new Set<string>();
     if (t.kind === "daily") {
-      if (dateOf(t.created_at) > day) continue;
-      if (t.archived_at !== null && dateOf(t.archived_at) <= day) continue;
+      if (localDateOf(t.created_at) > day) continue;
+      if (t.archived_at !== null && localDateOf(t.archived_at) <= day) continue;
       daily.push({
         task: t,
         done: dates.has(day),

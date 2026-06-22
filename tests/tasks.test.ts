@@ -157,6 +157,11 @@ describe("buildDay", () => {
     const completions = [done("a", "2026-06-20"), done("a", "2026-06-21")];
     expect(buildDay(tasks, completions, day).overallStreak).toBe(2);
   });
+  it("shows a daily habit created earlier the same day (timezone boundary)", () => {
+    // created_at is an instant within `day` (UTC test env); must still appear.
+    const tasks = [task({ id: "a", created_at: "2026-06-21T23:30:00Z" })];
+    expect(buildDay(tasks, [], day).daily).toHaveLength(1);
+  });
 });
 
 describe("outstandingDaily", () => {
