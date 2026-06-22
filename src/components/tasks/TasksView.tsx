@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDays, buildDay, outstandingDaily, toDateStr } from "@/lib/tasks";
 import { createBrowserSupabase } from "@/lib/supabase/client";
@@ -36,6 +36,14 @@ export function TasksView({
   const [completions, setCompletions] = useState(initialCompletions);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TaskRowType | null>(null);
+
+  // Re-seed from the server after router.refresh() (create/edit/delete). useState
+  // only reads its initializer on mount, so without this the local completions log
+  // would go stale against the refreshed `tasks` prop. Optimistic toggles persist to
+  // the DB before any refresh, so a re-seed reflects them rather than reverting.
+  useEffect(() => {
+    setCompletions(initialCompletions);
+  }, [initialCompletions]);
 
   const today = useMemo(() => toDateStr(new Date()), []);
   const yesterday = useMemo(() => addDays(today, -1), [today]);
